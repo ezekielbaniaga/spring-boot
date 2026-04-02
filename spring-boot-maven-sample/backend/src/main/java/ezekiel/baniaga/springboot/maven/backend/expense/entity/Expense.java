@@ -1,6 +1,8 @@
 package ezekiel.baniaga.springboot.maven.backend.expense.entity;
 
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -8,8 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-dito ako natapos
-basahin to https://www.baeldung.com/java-record-keyword
+@Getter @Setter @NoArgsConstructor
 public class Expense {
     private UUID id;
     private String description;

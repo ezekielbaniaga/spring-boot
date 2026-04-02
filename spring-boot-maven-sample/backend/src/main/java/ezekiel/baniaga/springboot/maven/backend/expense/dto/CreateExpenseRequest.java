@@ -1,13 +1,14 @@
 package ezekiel.baniaga.springboot.maven.backend.expense.dto;
 
-import ezekiel.baniaga.springboot.maven.backend.expense.entity.Category;
+import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Data
 public class CreateExpenseRequest {
-    public String description;
-    public BigDecimal amount;
-    public Category category;
-    public LocalDate date;
+    private String description;
+    private BigDecimal amount;
+    private String category;
+    private LocalDate date;
 }

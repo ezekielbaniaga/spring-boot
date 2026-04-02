@@ -7,4 +7,7 @@ import java.util.List;
 public interface ExpenseRepository {
 
     List<Expense> findAll();
+
+    Expense add(Expense expense);
+
 }

@@ -11,4 +11,9 @@ public class PostgresRepository implements ExpenseRepository {
     public List<Expense> findAll() {
         return List.of();
     }
+
+    @Override
+    public Expense add(Expense expense) {
+        throw new UnsupportedOperationException();
+    }
 }

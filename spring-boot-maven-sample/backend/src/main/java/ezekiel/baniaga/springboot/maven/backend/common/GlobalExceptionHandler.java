@@ -45,4 +45,10 @@ public class GlobalExceptionHandler {
         ErrorResponse resp = new ErrorResponse("VALIDATION_ERROR", errors);
         return ResponseEntity.badRequest().body(resp);
     }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<?> handleBadRequest(BadRequestException ex) {
+        ErrorResponse resp = new ErrorResponse(ex.getCode(), ex.getMessage());
+        return ResponseEntity.status(400).body(resp);
+    }
 }
