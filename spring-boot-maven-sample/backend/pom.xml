@@ -81,11 +81,13 @@
 				</configuration>
 			</plugin>
 
+			<!-- Spring Boot Maven Plugin: To package the application as a jar/war -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<excludes>
+						<!-- Exclude Lombok from the final build -->
 						<exclude>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>

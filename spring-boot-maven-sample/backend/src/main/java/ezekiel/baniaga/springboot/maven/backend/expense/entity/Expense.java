@@ -1,6 +1,5 @@
 package ezekiel.baniaga.springboot.maven.backend.expense.entity;
 
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
