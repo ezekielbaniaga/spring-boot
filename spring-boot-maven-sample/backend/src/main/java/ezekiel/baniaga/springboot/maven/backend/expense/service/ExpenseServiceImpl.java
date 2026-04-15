@@ -1,9 +1,7 @@
 package ezekiel.baniaga.springboot.maven.backend.expense.service;
 
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.CreateExpenseRequest;
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.ExpenseListItemResponse;
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.ExpenseListResponse;
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.ExpenseResponse;
+import ezekiel.baniaga.springboot.maven.backend.expense.dto.*;
+import ezekiel.baniaga.springboot.maven.backend.expense.entity.Category;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Expense;
 import ezekiel.baniaga.springboot.maven.backend.expense.mapper.ExpenseMapper;
 import ezekiel.baniaga.springboot.maven.backend.expense.repo.ExpenseRepository;
@@ -37,4 +35,12 @@ public class ExpenseServiceImpl implements ExpenseService {
         Expense expense = expenseMapper.toEntity(request);
         return expenseMapper.toResponse(repository.add(expense));
     }
+
+    @Override
+    public AllCategoriesResponse getAllCategories() {
+        return new AllCategoriesResponse(
+            Category.values());
+    }
+
+
 }

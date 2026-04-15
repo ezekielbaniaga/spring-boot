@@ -1,5 +1,6 @@
 package ezekiel.baniaga.springboot.maven.backend.expense.service;
 
+import ezekiel.baniaga.springboot.maven.backend.expense.dto.AllCategoriesResponse;
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.CreateExpenseRequest;
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.ExpenseListResponse;
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.ExpenseResponse;
@@ -10,5 +11,6 @@ public interface ExpenseService {
 
     ExpenseResponse addExpense(CreateExpenseRequest request);
 
+    AllCategoriesResponse getAllCategories();
 
 }

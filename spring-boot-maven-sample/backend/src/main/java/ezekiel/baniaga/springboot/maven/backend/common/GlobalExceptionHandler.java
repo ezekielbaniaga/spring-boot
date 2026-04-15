@@ -5,6 +5,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.format.DateTimeParseException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -39,7 +41,7 @@ public class GlobalExceptionHandler {
         String[] errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(error -> error.getDefaultMessage())
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .toList().toArray(new String[]{});
 
         ErrorResponse resp = new ErrorResponse("VALIDATION_ERROR", errors);
@@ -51,4 +53,16 @@ public class GlobalExceptionHandler {
         ErrorResponse resp = new ErrorResponse(ex.getCode(), ex.getMessage());
         return ResponseEntity.status(400).body(resp);
     }
+
+    /**
+     * Invalid date such as JUNE 31 in JSON body
+     */
+    @ExceptionHandler(DateTimeParseException.class)
+    public ResponseEntity<?> handleInvalidDate(DateTimeParseException ex) {
+        ErrorResponse resp = new ErrorResponse("VALIDATION_ERROR", new String[] {
+            ex.getMessage()
+        });
+        return ResponseEntity.badRequest().body(resp);
+    }
+
 }
