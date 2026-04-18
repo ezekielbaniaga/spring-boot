@@ -1,0 +1,25 @@
+package ezekiel.baniaga.springboot.maven.backend.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.ApiVersionConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class WebMVCConfig implements WebMvcConfigurer {
+
+    @Autowired
+    DefaultApiVersionParser apiVersionParser;
+
+    @Override
+    public void configureApiVersioning(ApiVersionConfigurer configurer) {
+        configurer.addSupportedVersions(
+            "1.0", "1.1", "1.2",
+            "2.0", "2.1", "2.2"
+        );
+
+        configurer.setDefaultVersion("1.0");
+        configurer.setVersionParser(apiVersionParser);
+        configurer.useRequestHeader("X-API-Version");
+    }
+}

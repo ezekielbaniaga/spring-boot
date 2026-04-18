@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -28,6 +29,20 @@ public class ExpenseServiceImpl implements ExpenseService {
 
         return new ExpenseListResponse(
             expensesResponse, expensesResponse.size());
+    }
+
+    @Override
+    public ExpenseListResponseV1_1 getAllExpensesV1_1() {
+        List<ExpenseListItemResponse> expensesResponse =
+                repository.findAll().stream().map(expenseMapper::toListItem).toList();
+
+        int count = expensesResponse.size();
+        BigDecimal total_amount = expensesResponse.stream()
+                .map(ExpenseListItemResponse::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new ExpenseListResponseV1_1(
+                expensesResponse, count, total_amount);
     }
 
     @Override

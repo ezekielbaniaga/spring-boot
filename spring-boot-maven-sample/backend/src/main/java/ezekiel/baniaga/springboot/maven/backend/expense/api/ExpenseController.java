@@ -1,32 +1,34 @@
 package ezekiel.baniaga.springboot.maven.backend.expense.api;
 
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.AllCategoriesResponse;
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.CreateExpenseRequest;
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.ExpenseListResponse;
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.ExpenseResponse;
+import ezekiel.baniaga.springboot.maven.backend.expense.dto.*;
 import ezekiel.baniaga.springboot.maven.backend.expense.service.ExpenseService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("${api.path}/expense")
+@RequestMapping("api/expense")
 public class ExpenseController {
 
     @Autowired
     ExpenseService service;
 
-    @GetMapping
+    @GetMapping(version = "1.0")
     public ExpenseListResponse getExpenses() {
         return service.getAllExpenses();
     }
 
-    @PostMapping
+    @GetMapping(version = "1.1")
+    public ExpenseListResponseV1_1 getExpenseV1_1() {
+        return service.getAllExpensesV1_1();
+    }
+
+    @PostMapping(version = "1.0")
     public ExpenseResponse createExpense(@Valid @RequestBody CreateExpenseRequest request) {
         return service.addExpense(request);
     }
 
-    @GetMapping("/categories")
+    @GetMapping(value = "/categories", version = "1.0")
     public AllCategoriesResponse getSupportedCategories() {
         return service.getAllCategories();
     }
