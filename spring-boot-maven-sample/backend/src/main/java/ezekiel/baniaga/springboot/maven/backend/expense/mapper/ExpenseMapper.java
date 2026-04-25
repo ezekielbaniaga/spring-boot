@@ -17,22 +17,22 @@ public class ExpenseMapper {
         expense.setAmount(request.getAmount());
         expense.setCategory(parseCategory(request.getCategory()));
         expense.setDescription(request.getDescription());
-        expense.setDate(request.getDate());
+        expense.setExpenseDate(request.getDate());
         return expense;
     }
 
     public ExpenseResponse toResponse(Expense expense) {
         return new ExpenseResponse(
-            expense.getId(),
+            expense.getUniqueId(),
             expense.getDescription(),
             expense.getAmount(),
             expense.getCategory(),
-            expense.getDate());
+            expense.getExpenseDate());
     }
 
     public ExpenseListItemResponse toListItem(Expense expense) {
         return new ExpenseListItemResponse(
-            expense.getId(),
+            expense.getUniqueId(),
             expense.getDescription(),
             expense.getAmount());
     }

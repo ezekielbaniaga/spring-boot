@@ -1,5 +1,6 @@
 package ezekiel.baniaga.springboot.maven.backend.expense.entity;
 
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,12 +10,19 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Entity
+@Table(name = "expense")
 @Getter @Setter @NoArgsConstructor
 public class Expense {
-    private UUID id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private UUID uniqueId;
     private String description;
     private BigDecimal amount;
     private Category category;
-    private LocalDate date;
+    private LocalDate expenseDate;
     private LocalDateTime createdAt;
 }

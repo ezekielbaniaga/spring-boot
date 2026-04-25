@@ -1,28 +1,28 @@
-package ezekiel.baniaga.springboot.maven.backend.expense.service;
+package ezekiel.baniaga.springboot.maven.backend.expense;
 
+import com.fasterxml.uuid.Generators;
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.*;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Category;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Expense;
 import ezekiel.baniaga.springboot.maven.backend.expense.mapper.ExpenseMapper;
-import ezekiel.baniaga.springboot.maven.backend.expense.repo.ExpenseRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
-public class ExpenseServiceImpl implements ExpenseService {
+public class ExpenseService {
 
-    @Autowired
-    @Qualifier("in-memory")
-    ExpenseRepository repository;
+    private final ExpenseRepository repository;
+    private final ExpenseMapper expenseMapper;
 
-    @Autowired
-    ExpenseMapper expenseMapper;
+    public ExpenseService(ExpenseRepository repository, ExpenseMapper expenseMapper) {
+        this.repository = repository;
+        this.expenseMapper = expenseMapper;
+    }
 
-    @Override
     public ExpenseListResponse getAllExpenses() {
         List<ExpenseListItemResponse> expensesResponse =
             repository.findAll().stream().map(expenseMapper::toListItem).toList();
@@ -31,7 +31,6 @@ public class ExpenseServiceImpl implements ExpenseService {
             expensesResponse, expensesResponse.size());
     }
 
-    @Override
     public ExpenseListResponseV1_1 getAllExpensesV1_1() {
         List<ExpenseListItemResponse> expensesResponse =
                 repository.findAll().stream().map(expenseMapper::toListItem).toList();
@@ -45,13 +44,16 @@ public class ExpenseServiceImpl implements ExpenseService {
                 expensesResponse, count, total_amount);
     }
 
-    @Override
     public ExpenseResponse addExpense(CreateExpenseRequest request) {
         Expense expense = expenseMapper.toEntity(request);
-        return expenseMapper.toResponse(repository.add(expense));
+
+        // UUID Version 7
+        UUID uuid = Generators.timeBasedEpochGenerator().generate();
+        expense.setUniqueId(uuid);
+        expense.setCreatedAt(LocalDateTime.now());
+        return expenseMapper.toResponse(repository.saveAndFlush(expense));
     }
 
-    @Override
     public AllCategoriesResponse getAllCategories() {
         return new AllCategoriesResponse(
             Category.values());

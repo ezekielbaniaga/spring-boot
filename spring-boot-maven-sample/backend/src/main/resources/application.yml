@@ -5,3 +5,13 @@ spring:
     url: "jdbc:postgresql://localhost:5432/appdb"
     username: "devuser"
     password: "devpwd"
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+  flyway:
+    enabled: true
+
+  logging:
+    level:
+      org.flywaydb: DEBUG

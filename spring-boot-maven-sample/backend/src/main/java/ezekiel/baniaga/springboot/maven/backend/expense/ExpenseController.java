@@ -1,17 +1,18 @@
-package ezekiel.baniaga.springboot.maven.backend.expense.api;
+package ezekiel.baniaga.springboot.maven.backend.expense;
 
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.*;
-import ezekiel.baniaga.springboot.maven.backend.expense.service.ExpenseService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/expense")
 public class ExpenseController {
 
-    @Autowired
-    ExpenseService service;
+    private final ExpenseService service;
+
+    public ExpenseController(ExpenseService service) {
+        this.service = service;
+    }
 
     @GetMapping(version = "1.0")
     public ExpenseListResponse getExpenses() {
