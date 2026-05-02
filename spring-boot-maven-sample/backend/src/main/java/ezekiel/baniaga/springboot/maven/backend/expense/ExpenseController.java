@@ -2,7 +2,10 @@ package ezekiel.baniaga.springboot.maven.backend.expense;
 
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.*;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/expense")
@@ -32,5 +35,16 @@ public class ExpenseController {
     @GetMapping(value = "/categories", version = "1.0")
     public AllCategoriesResponse getSupportedCategories() {
         return service.getAllCategories();
+    }
+
+    @GetMapping(value = "/{uniqueId}")
+    public ExpenseResponse getByUniqueId(@PathVariable UUID uniqueId) {
+        return service.getExpenseByUniqueId(uniqueId);
+    }
+
+    @DeleteMapping(value = "/{uniqueId}")
+    public ResponseEntity<Void> deleteByUniqueId(@PathVariable UUID uniqueId) {
+        service.deleteExpense(uniqueId);
+        return ResponseEntity.noContent().build();
     }
 }

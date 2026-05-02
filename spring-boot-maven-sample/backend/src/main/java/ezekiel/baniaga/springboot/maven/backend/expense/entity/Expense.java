@@ -25,4 +25,6 @@ public class Expense {
     private Category category;
     private LocalDate expenseDate;
     private LocalDateTime createdAt;
+    private Boolean archived;
+    private LocalDateTime archivedAt;
 }

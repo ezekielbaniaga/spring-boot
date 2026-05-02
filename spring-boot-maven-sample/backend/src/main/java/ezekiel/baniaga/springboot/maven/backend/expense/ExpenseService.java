@@ -1,6 +1,7 @@
 package ezekiel.baniaga.springboot.maven.backend.expense;
 
 import com.fasterxml.uuid.Generators;
+import ezekiel.baniaga.springboot.maven.backend.common.ResourceNotFoundException;
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.*;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Category;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Expense;
@@ -23,7 +24,23 @@ public class ExpenseService {
         this.expenseMapper = expenseMapper;
     }
 
+    public ExpenseResponse getExpenseByUniqueId(UUID uniqueId) {
+        //TODO: Add include archived=true, if yes can retrieve
+        // record from archived
+        Expense expense = findExpenseOrThrow(uniqueId);
+        return expenseMapper.toResponse(expense);
+    }
+
+    public void deleteExpense(UUID uniqueId) {
+        Expense expense = findExpenseOrThrow(uniqueId);
+        // repository.delete(expense); --> hard delete
+        expense.setArchived(true);
+        expense.setArchivedAt(LocalDateTime.now());
+        repository.save(expense);
+    }
+
     public ExpenseListResponse getAllExpenses() {
+        //TODO: Don't include archived records
         List<ExpenseListItemResponse> expensesResponse =
             repository.findAll().stream().map(expenseMapper::toListItem).toList();
 
@@ -51,7 +68,7 @@ public class ExpenseService {
         UUID uuid = Generators.timeBasedEpochGenerator().generate();
         expense.setUniqueId(uuid);
         expense.setCreatedAt(LocalDateTime.now());
-        return expenseMapper.toResponse(repository.saveAndFlush(expense));
+        return expenseMapper.toResponse(repository.save(expense));
     }
 
     public AllCategoriesResponse getAllCategories() {
@@ -59,5 +76,14 @@ public class ExpenseService {
             Category.values());
     }
 
+    //TODO: Create similar but does not return archive so that in
+    // findByUniqueId we can add option to include archived=true.
+    private Expense findExpenseOrThrow(UUID uniqueId) {
+        return repository.findByUniqueId(uniqueId)
+                .orElseThrow(()->new ResourceNotFoundException("EXPENSE_NOT_FOUND"));
+    }
 
+
+    //TODO: Create schedule cron job for deleting
+    // archived expense based on retention policy
 }
