@@ -25,8 +25,6 @@ public class ExpenseService {
     }
 
     public ExpenseResponse getExpenseByUniqueId(UUID uniqueId) {
-        //TODO: Add include archived=true, if yes can retrieve
-        // record from archived
         Expense expense = findExpenseOrThrow(uniqueId);
         return expenseMapper.toResponse(expense);
     }
@@ -40,17 +38,14 @@ public class ExpenseService {
     }
 
     public ExpenseListResponse getAllExpenses() {
-        //TODO: Don't include archived records
-        List<ExpenseListItemResponse> expensesResponse =
-            repository.findAll().stream().map(expenseMapper::toListItem).toList();
+        List<ExpenseListItemResponse> expensesResponse = findAllExpensesAndMapToListItem();
 
         return new ExpenseListResponse(
             expensesResponse, expensesResponse.size());
     }
 
     public ExpenseListResponseV1_1 getAllExpensesV1_1() {
-        List<ExpenseListItemResponse> expensesResponse =
-                repository.findAll().stream().map(expenseMapper::toListItem).toList();
+        List<ExpenseListItemResponse> expensesResponse = findAllExpensesAndMapToListItem();
 
         int count = expensesResponse.size();
         BigDecimal total_amount = expensesResponse.stream()
@@ -59,6 +54,13 @@ public class ExpenseService {
 
         return new ExpenseListResponseV1_1(
                 expensesResponse, count, total_amount);
+    }
+
+    public ArchivedExpenseListResponse getArchivedExpenses() {
+        List<ArchivedExpenseListItemResponse> expensesResponse = repository.findAllByArchivedIsTrue()
+                .stream().map(expenseMapper::toArchivedListItem).toList();
+
+        return new ArchivedExpenseListResponse(expensesResponse, expensesResponse.size());
     }
 
     public ExpenseResponse addExpense(CreateExpenseRequest request) {
@@ -76,8 +78,11 @@ public class ExpenseService {
             Category.values());
     }
 
-    //TODO: Create similar but does not return archive so that in
-    // findByUniqueId we can add option to include archived=true.
+    private List<ExpenseListItemResponse> findAllExpensesAndMapToListItem() {
+        return repository.findAllByArchivedIsNullOrArchivedIsFalse()
+            .stream().map(expenseMapper::toListItem).toList();
+    }
+
     private Expense findExpenseOrThrow(UUID uniqueId) {
         return repository.findByUniqueId(uniqueId)
                 .orElseThrow(()->new ResourceNotFoundException("EXPENSE_NOT_FOUND"));

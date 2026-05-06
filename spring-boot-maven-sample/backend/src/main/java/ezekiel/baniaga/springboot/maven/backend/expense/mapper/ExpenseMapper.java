@@ -2,6 +2,7 @@ package ezekiel.baniaga.springboot.maven.backend.expense.mapper;
 
 import ezekiel.baniaga.springboot.maven.backend.common.BadRequestException;
 import ezekiel.baniaga.springboot.maven.backend.common.BusinessRuleException;
+import ezekiel.baniaga.springboot.maven.backend.expense.dto.ArchivedExpenseListItemResponse;
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.CreateExpenseRequest;
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.ExpenseListItemResponse;
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.ExpenseResponse;
@@ -35,6 +36,14 @@ public class ExpenseMapper {
             expense.getUniqueId(),
             expense.getDescription(),
             expense.getAmount());
+    }
+
+    public ArchivedExpenseListItemResponse toArchivedListItem(Expense expense) {
+        return new ArchivedExpenseListItemResponse(
+            expense.getUniqueId(),
+            expense.getDescription(),
+            expense.getAmount(),
+            expense.getArchivedAt());
     }
 
     private static Category parseCategory(String value) {

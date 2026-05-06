@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -25,6 +26,11 @@ public class ExpenseController {
     @GetMapping(version = "1.1")
     public ExpenseListResponseV1_1 getExpenseV1_1() {
         return service.getAllExpensesV1_1();
+    }
+
+    @GetMapping(value = "/archived")
+    public ArchivedExpenseListResponse getArchivedExpenses() {
+       return service.getArchivedExpenses();
     }
 
     @PostMapping(version = "1.0")
