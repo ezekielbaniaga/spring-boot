@@ -6,6 +6,7 @@ import ezekiel.baniaga.springboot.maven.backend.expense.dto.*;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Category;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Expense;
 import ezekiel.baniaga.springboot.maven.backend.expense.mapper.ExpenseMapper;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -88,7 +89,10 @@ public class ExpenseService {
                 .orElseThrow(()->new ResourceNotFoundException("EXPENSE_NOT_FOUND"));
     }
 
+    @Transactional
+    public int cleanupArchived(int retentionMaxDays, int limit) {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionMaxDays);
+        return repository.deleteOldExpense(cutoff, limit);
+    }
 
-    //TODO: Create schedule cron job for deleting
-    // archived expense based on retention policy
 }
