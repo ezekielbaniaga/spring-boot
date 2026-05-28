@@ -19,12 +19,16 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     private UUID uniqueId;
     private String description;
     private BigDecimal amount;
     private Category category;
     private LocalDate expenseDate;
     private LocalDateTime createdAt;
+    private LocalDateTime lastModified;
     private Boolean archived;
     private LocalDateTime archivedAt;
 }

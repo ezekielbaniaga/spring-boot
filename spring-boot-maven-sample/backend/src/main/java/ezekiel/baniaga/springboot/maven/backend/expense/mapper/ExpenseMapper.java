@@ -2,10 +2,7 @@ package ezekiel.baniaga.springboot.maven.backend.expense.mapper;
 
 import ezekiel.baniaga.springboot.maven.backend.common.BadRequestException;
 import ezekiel.baniaga.springboot.maven.backend.common.BusinessRuleException;
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.ArchivedExpenseListItemResponse;
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.CreateExpenseRequest;
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.ExpenseListItemResponse;
-import ezekiel.baniaga.springboot.maven.backend.expense.dto.ExpenseResponse;
+import ezekiel.baniaga.springboot.maven.backend.expense.dto.*;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Category;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Expense;
 import org.springframework.stereotype.Component;
@@ -22,13 +19,25 @@ public class ExpenseMapper {
         return expense;
     }
 
+    public Expense toEntity(UpdateExpenseRequest request, Expense expenseFromDb) {
+        expenseFromDb.setAmount(request.getAmount());
+        expenseFromDb.setCategory(parseCategory(request.getCategory()));
+        expenseFromDb.setDescription(request.getDescription());
+        expenseFromDb.setExpenseDate(request.getDate());
+
+        return expenseFromDb;
+    }
+
     public ExpenseResponse toResponse(Expense expense) {
         return new ExpenseResponse(
             expense.getUniqueId(),
+            expense.getVersion(),
             expense.getDescription(),
             expense.getAmount(),
             expense.getCategory(),
-            expense.getExpenseDate());
+            expense.getExpenseDate(),
+            expense.getCreatedAt(),
+            expense.getLastModified());
     }
 
     public ExpenseListItemResponse toListItem(Expense expense) {

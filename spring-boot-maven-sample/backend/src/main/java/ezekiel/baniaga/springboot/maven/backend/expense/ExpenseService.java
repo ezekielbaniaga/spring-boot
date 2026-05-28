@@ -1,6 +1,7 @@
 package ezekiel.baniaga.springboot.maven.backend.expense;
 
 import com.fasterxml.uuid.Generators;
+import ezekiel.baniaga.springboot.maven.backend.common.BusinessRuleException;
 import ezekiel.baniaga.springboot.maven.backend.common.ResourceNotFoundException;
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.*;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Category;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +30,25 @@ public class ExpenseService {
     public ExpenseResponse getExpenseByUniqueId(UUID uniqueId) {
         Expense expense = findExpenseOrThrow(uniqueId);
         return expenseMapper.toResponse(expense);
+    }
+
+    @Transactional
+    public ExpenseResponse updateExpense(UUID uniqueId, UpdateExpenseRequest request) {
+        Expense expense = findExpenseOrThrow(uniqueId);
+
+        if (!expense.getVersion().equals(request.getVersion())) {
+            throw new BusinessRuleException("CONCURRENT_MODIFICATION","Expense was modified by another user");
+        }
+
+        if (Boolean.TRUE.equals(expense.getArchived())) {
+            throw new BusinessRuleException("MODIFY_ARCHIVED","Cannot modify archived expense");
+        }
+
+        expense = expenseMapper.toEntity(request, expense);
+        expense.setLastModified(LocalDateTime.now());
+
+        // Using saveAndFlush to get latest version field incremented by Hibernate
+        return expenseMapper.toResponse(repository.saveAndFlush(expense));
     }
 
     public void deleteExpense(UUID uniqueId) {

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping("api/expense")
@@ -46,6 +47,11 @@ public class ExpenseController {
     @GetMapping(value = "/{uniqueId}")
     public ExpenseResponse getByUniqueId(@PathVariable UUID uniqueId) {
         return service.getExpenseByUniqueId(uniqueId);
+    }
+
+    @PutMapping(value = "/{uniqueId}")
+    public ExpenseResponse update(@PathVariable UUID uniqueId, @Valid @RequestBody UpdateExpenseRequest request) {
+        return service.updateExpense(uniqueId, request);
     }
 
     @DeleteMapping(value = "/{uniqueId}")

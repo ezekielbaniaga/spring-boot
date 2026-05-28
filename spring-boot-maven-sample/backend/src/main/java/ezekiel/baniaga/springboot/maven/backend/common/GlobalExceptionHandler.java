@@ -1,6 +1,7 @@
 package ezekiel.baniaga.springboot.maven.backend.common;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -63,6 +64,15 @@ public class GlobalExceptionHandler {
             ex.getMessage()
         });
         return ResponseEntity.badRequest().body(resp);
+    }
+
+    /**
+     * Multiple update request by checking version
+     */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<?> handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
+        ErrorResponse resp = new ErrorResponse("CONCURRENT_MODIFICATION", "Record was modified by another user.");
+        return ResponseEntity.status(409).body(resp);
     }
 
 }
