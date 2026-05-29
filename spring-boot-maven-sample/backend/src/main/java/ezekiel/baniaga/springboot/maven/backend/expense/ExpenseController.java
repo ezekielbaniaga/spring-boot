@@ -59,4 +59,9 @@ public class ExpenseController {
         service.deleteExpense(uniqueId);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping(value = "/{uniqueId}/description")
+    public ExpenseResponse patchDescription(@PathVariable UUID uniqueId, @Valid @RequestBody PatchExpenseDescriptionRequest request) {
+        return service.patchExpenseDescription(uniqueId, request);
+    }
 }

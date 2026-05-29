@@ -8,24 +8,20 @@ import ezekiel.baniaga.springboot.maven.backend.expense.entity.Category;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Expense;
 import ezekiel.baniaga.springboot.maven.backend.expense.mapper.ExpenseMapper;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ExpenseService {
 
     private final ExpenseRepository repository;
     private final ExpenseMapper expenseMapper;
-
-    public ExpenseService(ExpenseRepository repository, ExpenseMapper expenseMapper) {
-        this.repository = repository;
-        this.expenseMapper = expenseMapper;
-    }
 
     public ExpenseResponse getExpenseByUniqueId(UUID uniqueId) {
         Expense expense = findExpenseOrThrow(uniqueId);
@@ -36,18 +32,26 @@ public class ExpenseService {
     public ExpenseResponse updateExpense(UUID uniqueId, UpdateExpenseRequest request) {
         Expense expense = findExpenseOrThrow(uniqueId);
 
-        if (!expense.getVersion().equals(request.getVersion())) {
-            throw new BusinessRuleException("CONCURRENT_MODIFICATION","Expense was modified by another user");
-        }
-
-        if (Boolean.TRUE.equals(expense.getArchived())) {
-            throw new BusinessRuleException("MODIFY_ARCHIVED","Cannot modify archived expense");
-        }
+        checkVersion(expense, request.getVersion());
+        checkIfArchived(expense);
 
         expense = expenseMapper.toEntity(request, expense);
         expense.setLastModified(LocalDateTime.now());
 
         // Using saveAndFlush to get latest version field incremented by Hibernate
+        return expenseMapper.toResponse(repository.saveAndFlush(expense));
+    }
+
+    @Transactional
+    public ExpenseResponse patchExpenseDescription(UUID uniqueId, PatchExpenseDescriptionRequest request) {
+        Expense expense = findExpenseOrThrow(uniqueId);
+
+        checkVersion(expense, request.getVersion());
+        checkIfArchived(expense);
+
+        expense.setDescription(request.getDescription());
+        expense.setLastModified(LocalDateTime.now());
+
         return expenseMapper.toResponse(repository.saveAndFlush(expense));
     }
 
@@ -98,6 +102,18 @@ public class ExpenseService {
     public AllCategoriesResponse getAllCategories() {
         return new AllCategoriesResponse(
             Category.values());
+    }
+
+    private void checkIfArchived(Expense expense) {
+        if (Boolean.TRUE.equals(expense.getArchived())) {
+            throw new BusinessRuleException("MODIFY_ARCHIVED","Cannot modify archived expense");
+        }
+    }
+
+    private void checkVersion(Expense expense, Long version) {
+        if (!expense.getVersion().equals(version)) {
+            throw new BusinessRuleException("CONCURRENT_MODIFICATION","Expense was modified by another user");
+        }
     }
 
     private List<ExpenseListItemResponse> findAllExpensesAndMapToListItem() {

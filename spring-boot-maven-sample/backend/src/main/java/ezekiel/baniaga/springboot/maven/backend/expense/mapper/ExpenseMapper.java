@@ -1,7 +1,6 @@
 package ezekiel.baniaga.springboot.maven.backend.expense.mapper;
 
 import ezekiel.baniaga.springboot.maven.backend.common.BadRequestException;
-import ezekiel.baniaga.springboot.maven.backend.common.BusinessRuleException;
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.*;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Category;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Expense;
