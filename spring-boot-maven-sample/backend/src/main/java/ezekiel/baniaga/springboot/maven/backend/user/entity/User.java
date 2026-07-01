@@ -1,19 +1,17 @@
-package ezekiel.baniaga.springboot.maven.backend.expense.entity;
+package ezekiel.baniaga.springboot.maven.backend.user.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "expense")
 @Getter @Setter @NoArgsConstructor
-public class Expense {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,15 +21,22 @@ public class Expense {
     private Long version;
 
     private UUID uniqueId;
-    private String description;
-    private BigDecimal amount;
 
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private Category category;
+    private Role role;
 
-    private LocalDate expenseDate;
+    @Column(nullable = false)
+    private boolean enabled;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+
     private LocalDateTime lastModified;
-    private Boolean archived;
-    private LocalDateTime archivedAt;
 }
