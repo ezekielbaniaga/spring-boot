@@ -1,15 +1,15 @@
 package ezekiel.baniaga.springboot.maven.backend.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ApiVersionConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+@RequiredArgsConstructor
 public class WebMVCConfig implements WebMvcConfigurer {
 
-    @Autowired
-    DefaultApiVersionParser apiVersionParser;
+    private final DefaultApiVersionParser apiVersionParser;
 
     @Override
     public void configureApiVersioning(ApiVersionConfigurer configurer) {

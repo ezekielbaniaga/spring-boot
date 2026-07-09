@@ -1,4 +1,19 @@
 package ezekiel.baniaga.springboot.maven.backend.bootstrap;
 
-public class AdminBootstrapRunner {
+import ezekiel.baniaga.springboot.maven.backend.auth.service.AdminBootstrapService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class AdminBootstrapRunner implements ApplicationRunner {
+
+    private final AdminBootstrapService adminBootstrapService;
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        adminBootstrapService.createInitialAdminUser();
+    }
 }

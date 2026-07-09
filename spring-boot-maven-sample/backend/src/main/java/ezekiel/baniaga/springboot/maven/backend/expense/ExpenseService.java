@@ -1,8 +1,8 @@
 package ezekiel.baniaga.springboot.maven.backend.expense;
 
-import com.fasterxml.uuid.Generators;
 import ezekiel.baniaga.springboot.maven.backend.common.BusinessRuleException;
 import ezekiel.baniaga.springboot.maven.backend.common.ResourceNotFoundException;
+import ezekiel.baniaga.springboot.maven.backend.config.DefaultUUIDGenerator;
 import ezekiel.baniaga.springboot.maven.backend.expense.dto.*;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Category;
 import ezekiel.baniaga.springboot.maven.backend.expense.entity.Expense;
@@ -22,6 +22,7 @@ public class ExpenseService {
 
     private final ExpenseRepository repository;
     private final ExpenseMapper expenseMapper;
+    private final DefaultUUIDGenerator uuidGenerator;
 
     public ExpenseResponse getExpenseByUniqueId(UUID uniqueId) {
         Expense expense = findExpenseOrThrow(uniqueId);
@@ -92,8 +93,7 @@ public class ExpenseService {
     public ExpenseResponse addExpense(CreateExpenseRequest request) {
         Expense expense = expenseMapper.toEntity(request);
 
-        // UUID Version 7
-        UUID uuid = Generators.timeBasedEpochGenerator().generate();
+        UUID uuid = uuidGenerator.generate();
         expense.setUniqueId(uuid);
         expense.setCreatedAt(LocalDateTime.now());
         return expenseMapper.toResponse(repository.save(expense));
