@@ -1,4 +1,4 @@
-package ezekiel.baniaga.springboot.maven.backend.config;
+package ezekiel.baniaga.springboot.maven.backend.auth.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
