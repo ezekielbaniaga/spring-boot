@@ -1,6 +1,6 @@
 package ezekiel.baniaga.springboot.maven.backend.auth.service;
 
-import ezekiel.baniaga.springboot.maven.backend.auth.config.AdminBootstrapProperties;
+import ezekiel.baniaga.springboot.maven.backend.auth.props.AdminBootstrapProperties;
 import ezekiel.baniaga.springboot.maven.backend.config.DefaultUUIDGenerator;
 import ezekiel.baniaga.springboot.maven.backend.user.UserRepository;
 import ezekiel.baniaga.springboot.maven.backend.user.entity.Role;

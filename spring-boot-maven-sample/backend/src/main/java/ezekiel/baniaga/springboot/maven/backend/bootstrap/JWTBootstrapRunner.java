@@ -1,6 +1,6 @@
 package ezekiel.baniaga.springboot.maven.backend.bootstrap;
 
-import ezekiel.baniaga.springboot.maven.backend.auth.service.AdminBootstrapService;
+import ezekiel.baniaga.springboot.maven.backend.auth.service.JWTBootstrapService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -10,12 +10,12 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile("!test")
 @RequiredArgsConstructor
-public class AdminBootstrapRunner implements ApplicationRunner {
+public class JWTBootstrapRunner implements ApplicationRunner {
 
-    private final AdminBootstrapService adminBootstrapService;
+    private final JWTBootstrapService jwtBootstrapService;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        adminBootstrapService.createInitialAdminUser();
+        jwtBootstrapService.checkEnvironmentVariable();
     }
 }

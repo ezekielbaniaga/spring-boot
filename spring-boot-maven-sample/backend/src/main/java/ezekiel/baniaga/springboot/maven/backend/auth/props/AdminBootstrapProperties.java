@@ -1,4 +1,4 @@
-package ezekiel.baniaga.springboot.maven.backend.auth.config;
+package ezekiel.baniaga.springboot.maven.backend.auth.props;
 
 import lombok.Getter;
 import lombok.Setter;
