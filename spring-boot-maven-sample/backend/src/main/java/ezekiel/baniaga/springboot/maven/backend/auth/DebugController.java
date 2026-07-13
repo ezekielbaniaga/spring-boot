@@ -7,10 +7,12 @@ import ezekiel.baniaga.springboot.maven.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping("/debug")
+//@RestController
+//@RequestMapping("/debug")
+@Deprecated
 @RequiredArgsConstructor
 public class DebugController {
 
@@ -22,5 +24,10 @@ public class DebugController {
     public String token() {
         User user = userRepository.findByUsername("admin").orElseThrow();
         return jwtService.generateToken(new CustomUserDetails(user));
+    }
+
+    @GetMapping("/validate")
+    public boolean validate(@RequestParam String token) {
+        return jwtService.isTokenValid(token);
     }
 }

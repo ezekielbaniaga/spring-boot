@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.util.Date;
 
 import ezekiel.baniaga.springboot.maven.backend.auth.props.JWTProperties;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +26,7 @@ public class JWTService {
         return Jwts.builder()
             .subject(user.getUsername())
             .claim("uid", user.getUniqueId().toString())
-            .claim("role", user.getAuthorities().iterator().next().getAuthority())
+            .claim("role", user.getUser().getRole().name())
             .issuedAt(Date.from(now))
             .expiration(Date.from(now.plus(jwtProperties.getExpiration())))
             .signWith(signingKey())
@@ -32,18 +34,31 @@ public class JWTService {
     }
 
     public String extractUsername(String token) {
-
-        return null;
+        return extractAllClaims(token).getSubject();
     }
 
     public boolean isTokenValid(String token) {
+        try {
+            return !isTokenExpired(token);
+        } catch (JwtException ex) {
+            return false;
+        }
+    }
 
-        return false;
+    public boolean isTokenExpired(String token) {
+        return extractExpiration(token).isBefore(Instant.now());
     }
 
     public Instant extractExpiration(String token) {
+        return extractAllClaims(token).getExpiration().toInstant();
+    }
 
-        return null;
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
+            .verifyWith(signingKey())
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
     }
 
     private SecretKey signingKey() {
