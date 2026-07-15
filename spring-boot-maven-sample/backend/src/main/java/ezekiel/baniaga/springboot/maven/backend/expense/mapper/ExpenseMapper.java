@@ -11,18 +11,18 @@ public class ExpenseMapper {
 
     public Expense toEntity(CreateExpenseRequest request) {
         Expense expense = new Expense();
-        expense.setAmount(request.getAmount());
-        expense.setCategory(parseCategory(request.getCategory()));
-        expense.setDescription(request.getDescription());
-        expense.setExpenseDate(request.getDate());
+        expense.setAmount(request.amount());
+        expense.setCategory(parseCategory(request.category()));
+        expense.setDescription(request.description());
+        expense.setExpenseDate(request.date());
         return expense;
     }
 
     public Expense toEntity(UpdateExpenseRequest request, Expense expenseFromDb) {
-        expenseFromDb.setAmount(request.getAmount());
-        expenseFromDb.setCategory(parseCategory(request.getCategory()));
-        expenseFromDb.setDescription(request.getDescription());
-        expenseFromDb.setExpenseDate(request.getDate());
+        expenseFromDb.setAmount(request.amount());
+        expenseFromDb.setCategory(parseCategory(request.category()));
+        expenseFromDb.setDescription(request.description());
+        expenseFromDb.setExpenseDate(request.date());
 
         return expenseFromDb;
     }

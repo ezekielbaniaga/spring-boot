@@ -4,24 +4,22 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Data
-public class CreateExpenseRequest {
+public record CreateExpenseRequest (
 
     @NotBlank
     @Size(max=250)
-    private String description;
+    String description,
 
     @Positive
-    private BigDecimal amount;
+    BigDecimal amount,
 
     @NotBlank
-    private String category;
+    String category,
 
     @PastOrPresent
-    private LocalDate date;
-}
+    LocalDate date
+){}

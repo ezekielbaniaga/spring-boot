@@ -33,7 +33,7 @@ public class ExpenseService {
     public ExpenseResponse updateExpense(UUID uniqueId, UpdateExpenseRequest request) {
         Expense expense = findExpenseOrThrow(uniqueId);
 
-        checkVersion(expense, request.getVersion());
+        checkVersion(expense, request.version());
         checkIfArchived(expense);
 
         expense = expenseMapper.toEntity(request, expense);
@@ -47,10 +47,10 @@ public class ExpenseService {
     public ExpenseResponse patchExpenseDescription(UUID uniqueId, PatchExpenseDescriptionRequest request) {
         Expense expense = findExpenseOrThrow(uniqueId);
 
-        checkVersion(expense, request.getVersion());
+        checkVersion(expense, request.version());
         checkIfArchived(expense);
 
-        expense.setDescription(request.getDescription());
+        expense.setDescription(request.description());
         expense.setLastModified(LocalDateTime.now());
 
         return expenseMapper.toResponse(repository.saveAndFlush(expense));
@@ -76,7 +76,7 @@ public class ExpenseService {
 
         int count = expensesResponse.size();
         BigDecimal total_amount = expensesResponse.stream()
-                .map(ExpenseListItemResponse::getAmount)
+                .map(ExpenseListItemResponse::amount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new ExpenseListResponseV1_1(

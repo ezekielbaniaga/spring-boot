@@ -1,29 +1,26 @@
 package ezekiel.baniaga.springboot.maven.backend.expense.dto;
 
 import jakarta.validation.constraints.*;
-import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.UUID;
 
-@Data
-public class UpdateExpenseRequest {
+public record UpdateExpenseRequest (
 
     @PositiveOrZero
-    private Long version;
+    Long version,
 
     @NotBlank
     @Size(max=250)
-    private String description;
+    String description,
 
     @Positive
-    private BigDecimal amount;
+    BigDecimal amount,
 
     @NotBlank
-    private String category;
+    String category,
 
     @PastOrPresent
-    private LocalDate date;
+    LocalDate date
 
-}
+){}

@@ -18,6 +18,9 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final String BEARER_TOKEN = "Bearer ";
+    private static final int HEADER_WITHOUT_BEARER_IDX = 7;
+
     private final JWTService jwtService;
     private final DatabaseUserDetailsService databaseUserDetailsService;
 
@@ -29,12 +32,12 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (header == null || !header.startsWith("Bearer ")) {
+        if (header == null || !header.startsWith(BEARER_TOKEN)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = header.substring(7);
+        String token = header.substring(HEADER_WITHOUT_BEARER_IDX);
 
         // When invalid, skip updating security context
         if (!jwtService.isTokenValid(token)) {
