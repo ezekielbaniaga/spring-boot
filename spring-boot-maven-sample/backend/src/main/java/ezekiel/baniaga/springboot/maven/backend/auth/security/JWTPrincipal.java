@@ -1,7 +1,10 @@
 package ezekiel.baniaga.springboot.maven.backend.auth.security;
 
-import lombok.Data;
+import java.util.UUID;
 
-@Data
-public class JWTPrincipal {
-}
+public record JWTPrincipal (
+    UUID userId,
+    String username,
+    String role,
+    boolean enabled
+){}

@@ -3,12 +3,11 @@ package ezekiel.baniaga.springboot.maven.backend.auth.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
-@Data
-public class LoginRequest {
+public record LoginRequest(
 
     @NotBlank
-    private String username;
+    String username,
 
     @NotBlank
-    private String password;
-}
+    String password
+){}

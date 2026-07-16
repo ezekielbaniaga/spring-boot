@@ -3,6 +3,7 @@ package ezekiel.baniaga.springboot.maven.backend.auth.security;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 
 import ezekiel.baniaga.springboot.maven.backend.auth.props.JWTProperties;
 import io.jsonwebtoken.Claims;
@@ -31,6 +32,18 @@ public class JWTService {
             .expiration(Date.from(now.plus(jwtProperties.getExpiration())))
             .signWith(signingKey())
             .compact();
+    }
+
+    public JWTPrincipal extractPrincipal(String token) {
+
+        Claims claims = extractAllClaims(token);
+
+        return new JWTPrincipal(
+            UUID.fromString(claims.get("uid", String.class)),
+            claims.getSubject(),
+            claims.get("role", String.class),
+            claims.get("enabled", Boolean.class)
+        );
     }
 
     public String extractUsername(String token) {
