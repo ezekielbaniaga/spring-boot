@@ -1,5 +1,6 @@
 package ezekiel.baniaga.springboot.maven.backend.auth.security;
 
+import ezekiel.baniaga.springboot.maven.backend.auth.mapper.CustomUserDetailsMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -23,6 +23,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
     private final JWTService jwtService;
     private final DatabaseUserDetailsService databaseUserDetailsService;
+    private final CustomUserDetailsMapper mapper;
 
     @Override
     protected void doFilterInternal(
@@ -46,8 +47,8 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // Update security context for later use on @PreAuthorize or @AuthenticationPrincipal
-        String username = jwtService.extractUsername(token);
-        UserDetails userDetails = databaseUserDetailsService.loadUserByUsername(username); //TODO: Eliminate database call here later
+        JWTPrincipal principal = jwtService.extractPrincipal(token);
+        CustomUserDetails userDetails = mapper.toCustomUserDetails(principal);
 
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
             userDetails, null, userDetails.getAuthorities());

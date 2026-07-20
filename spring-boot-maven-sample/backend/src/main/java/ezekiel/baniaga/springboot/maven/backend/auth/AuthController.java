@@ -28,7 +28,7 @@ public class AuthController {
 
         UsernamePasswordAuthenticationToken uptoken =
             UsernamePasswordAuthenticationToken.unauthenticated(
-                loginRequest.getUsername(), loginRequest.getPassword());
+                loginRequest.username(), loginRequest.password());
 
         // Internally, Spring Security will use the provided UserDetailsService and PasswordEncoder
         // to authenticate the credentials

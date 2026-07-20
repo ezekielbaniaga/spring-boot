@@ -6,6 +6,7 @@ import ezekiel.baniaga.springboot.maven.backend.user.UserRepository;
 import ezekiel.baniaga.springboot.maven.backend.user.entity.Role;
 import ezekiel.baniaga.springboot.maven.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdminBootstrapService {
 
     private final UserRepository userRepository;
@@ -40,5 +42,7 @@ public class AdminBootstrapService {
         admin.setCreatedAt(LocalDateTime.now());
 
         userRepository.save(admin);
+
+        log.info("Default Admin User Created");
     }
 }

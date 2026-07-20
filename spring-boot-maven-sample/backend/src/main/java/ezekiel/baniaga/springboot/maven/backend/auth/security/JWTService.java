@@ -27,7 +27,7 @@ public class JWTService {
         return Jwts.builder()
             .subject(user.getUsername())
             .claim("uid", user.getUniqueId().toString())
-            .claim("role", user.getUser().getRole().name())
+            .claim("role", user.getRole())
             .issuedAt(Date.from(now))
             .expiration(Date.from(now.plus(jwtProperties.getExpiration())))
             .signWith(signingKey())
@@ -41,8 +41,7 @@ public class JWTService {
         return new JWTPrincipal(
             UUID.fromString(claims.get("uid", String.class)),
             claims.getSubject(),
-            claims.get("role", String.class),
-            claims.get("enabled", Boolean.class)
+            claims.get("role", String.class)
         );
     }
 
