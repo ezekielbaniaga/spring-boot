@@ -46,6 +46,13 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Note: We eliminated db call every request. For certain cases where immediate
+        // check to db is necessary, use these commented lines:
+        // e.g. Quickly check 'enabled' flag
+        //
+        // String username = jwtService.extractUsername(token);
+        // UserDetails userDetails = databaseUserDetailsService.loadUserByUsername(username);
+
         // Update security context for later use on @PreAuthorize or @AuthenticationPrincipal
         JWTPrincipal principal = jwtService.extractPrincipal(token);
         CustomUserDetails userDetails = mapper.toCustomUserDetails(principal);
