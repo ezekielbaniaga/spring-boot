@@ -37,7 +37,12 @@ public class AuthController {
         // Construct and response a JWT token if authentication was a success
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         String token = jwtService.generateToken(userDetails);
-        return new LoginResponse(token);
+
+
+        //TODO: creating session maybe in authentication flow because we don't have user object here
+
+
+        return new LoginResponse(token,"");
     }
 
 }
