@@ -4,8 +4,13 @@ import ezekiel.baniaga.springboot.maven.backend.auth.dto.LoginRequest;
 import ezekiel.baniaga.springboot.maven.backend.auth.dto.LoginResponse;
 import ezekiel.baniaga.springboot.maven.backend.auth.security.CustomUserDetails;
 import ezekiel.baniaga.springboot.maven.backend.auth.security.JWTService;
+import ezekiel.baniaga.springboot.maven.backend.session.UserSessionService;
+import ezekiel.baniaga.springboot.maven.backend.user.UserRepository;
+import ezekiel.baniaga.springboot.maven.backend.user.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,8 +28,13 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JWTService jwtService;
 
+    private final UserSessionService userSessionService;
+    private final UserRepository userRepository;
+
     @PostMapping("/login")
-    public LoginResponse login(@Valid @RequestBody LoginRequest loginRequest) {
+    public LoginResponse login(
+        @Valid @RequestBody LoginRequest loginRequest,
+        HttpServletRequest httpServletRequest) {
 
         UsernamePasswordAuthenticationToken uptoken =
             UsernamePasswordAuthenticationToken.unauthenticated(
@@ -38,11 +48,19 @@ public class AuthController {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         String token = jwtService.generateToken(userDetails);
 
-
         //TODO: creating session maybe in authentication flow because we don't have user object here
+        // Temporary using repo here for testing only, refactor later
 
+        User user = userRepository.findByUsername(userDetails.getUsername())
+            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userDetails.getUsername()));
 
-        return new LoginResponse(token,"");
+        String refreshToken = userSessionService.createSession(
+            user,
+            httpServletRequest.getHeader(HttpHeaders.USER_AGENT),
+            httpServletRequest.getRemoteAddr()
+        );
+
+        return new LoginResponse(token, refreshToken);
     }
 
 }

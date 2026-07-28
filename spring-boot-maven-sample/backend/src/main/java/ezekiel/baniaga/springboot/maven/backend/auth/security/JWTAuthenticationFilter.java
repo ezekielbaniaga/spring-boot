@@ -22,7 +22,6 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     private static final int HEADER_WITHOUT_BEARER_IDX = 7;
 
     private final JWTService jwtService;
-    private final DatabaseUserDetailsService databaseUserDetailsService;
     private final CustomUserDetailsMapper mapper;
 
     @Override
