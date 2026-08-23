@@ -1,8 +1,10 @@
 package ezekiel.baniaga.springboot.maven.backend.session;
 
 import ezekiel.baniaga.springboot.maven.backend.session.entity.UserSession;
+import ezekiel.baniaga.springboot.maven.backend.user.UserRepository;
 import ezekiel.baniaga.springboot.maven.backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -11,6 +13,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class UserSessionService {
 
+    private final UserRepository userRepository;
     private final UserSessionRepository repository;
     private final RefreshTokenGenerator refreshTokenGenerator;
     private final RefreshTokenHasher refreshTokenHasher;
@@ -29,13 +32,16 @@ public class UserSessionService {
            └──▶ NEVER database
      */
     public String createSession(
-            User user,
+            Long userId,
             String userAgent,
             String ipAddress) {
 
         String rawRefreshToken = refreshTokenGenerator.generate();
         String hashedRefreshToken = refreshTokenHasher.hash(rawRefreshToken);
         LocalDateTime now = LocalDateTime.now();
+
+        //This creates a reference/proxy without immediately querying the database.
+        User user = userRepository.getReferenceById(userId);
 
         UserSession session = new UserSession();
         session.setUser(user);
@@ -49,5 +55,23 @@ public class UserSessionService {
         repository.save(session);
 
         return rawRefreshToken;
+    }
+
+    public UserSession validateRefreshToken(String rawRefreshToken) {
+
+        String hash = refreshTokenHasher.hash(rawRefreshToken);
+
+        UserSession userSession = repository.findByRefreshTokenHash(hash)
+            .orElseThrow(()->new BadCredentialsException("Invalid Refresh Token"));
+
+        if (userSession.getRevokedAt() != null) {
+            throw new BadCredentialsException("Refresh token has been revoked");
+        }
+
+        if (userSession.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new BadCredentialsException("Refresh token has expired");
+        }
+
+        return userSession;
     }
 }

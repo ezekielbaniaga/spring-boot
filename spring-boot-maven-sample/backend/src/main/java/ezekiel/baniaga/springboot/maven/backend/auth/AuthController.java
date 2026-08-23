@@ -2,9 +2,12 @@ package ezekiel.baniaga.springboot.maven.backend.auth;
 
 import ezekiel.baniaga.springboot.maven.backend.auth.dto.LoginRequest;
 import ezekiel.baniaga.springboot.maven.backend.auth.dto.LoginResponse;
+import ezekiel.baniaga.springboot.maven.backend.auth.dto.RefreshTokenRequest;
+import ezekiel.baniaga.springboot.maven.backend.auth.mapper.CustomUserDetailsMapper;
 import ezekiel.baniaga.springboot.maven.backend.auth.security.CustomUserDetails;
 import ezekiel.baniaga.springboot.maven.backend.auth.security.JWTService;
 import ezekiel.baniaga.springboot.maven.backend.session.UserSessionService;
+import ezekiel.baniaga.springboot.maven.backend.session.entity.UserSession;
 import ezekiel.baniaga.springboot.maven.backend.user.UserRepository;
 import ezekiel.baniaga.springboot.maven.backend.user.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +32,8 @@ public class AuthController {
     private final JWTService jwtService;
 
     private final UserSessionService userSessionService;
-    private final UserRepository userRepository;
+
+    private final CustomUserDetailsMapper customUserDetailsMapper;
 
     @PostMapping("/login")
     public LoginResponse login(
@@ -48,14 +52,8 @@ public class AuthController {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         String token = jwtService.generateToken(userDetails);
 
-        //TODO: creating session maybe in authentication flow because we don't have user object here
-        // Temporary using repo here for testing only, refactor later
-
-        User user = userRepository.findByUsername(userDetails.getUsername())
-            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userDetails.getUsername()));
-
         String refreshToken = userSessionService.createSession(
-            user,
+            userDetails.getDatabaseId(),
             httpServletRequest.getHeader(HttpHeaders.USER_AGENT),
             httpServletRequest.getRemoteAddr()
         );
@@ -63,4 +61,23 @@ public class AuthController {
         return new LoginResponse(token, refreshToken);
     }
 
+    @PostMapping("/refresh")
+    public LoginResponse refresh(
+        @Valid @RequestBody RefreshTokenRequest request){
+
+        UserSession session =
+            userSessionService.validateRefreshToken(
+                request.refreshToken());
+
+        User user = session.getUser();
+
+        CustomUserDetails userDetails =
+            customUserDetailsMapper.toCustomUserDetails(user);
+
+        String accessToken =
+            jwtService.generateToken(userDetails);
+
+        return new LoginResponse(
+            accessToken, request.refreshToken());
+    }
 }

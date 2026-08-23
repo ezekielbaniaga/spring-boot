@@ -15,6 +15,8 @@ import java.util.UUID;
 public class CustomUserDetails implements UserDetails {
 
     @Getter
+    private final Long databaseId;
+    @Getter
     private final UUID uniqueId;
     private final String username;
     private final String password;
