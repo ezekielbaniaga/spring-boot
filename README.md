@@ -5,6 +5,7 @@ A Spring Boot expense tracker demonstrating modern backend practices, including 
 
 flowchart TD
 
+```mermaid
     %% =========================
     %% LOGIN
     %% =========================
@@ -189,3 +190,5 @@ flowchart TD
     BH --> BI[Session revoked]
 
     BI -->|Future refresh| BJ[401 Unauthorized]
+```
+
