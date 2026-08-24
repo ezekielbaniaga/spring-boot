@@ -3,9 +3,10 @@
 A Spring Boot expense tracker demonstrating modern backend practices, including stateless JWT authentication, refresh token rotation, session management, and PostgreSQL persistence.
 
 
+```mermaid
+
 flowchart TD
 
-```mermaid
     %% =========================
     %% LOGIN
     %% =========================
@@ -190,5 +191,6 @@ flowchart TD
     BH --> BI[Session revoked]
 
     BI -->|Future refresh| BJ[401 Unauthorized]
+
 ```
 
