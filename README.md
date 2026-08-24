@@ -1,196 +1,949 @@
-## About
+# Spring Boot Expense Tracker — Authentication & JWT
 
-A Spring Boot expense tracker demonstrating modern backend practices, including stateless JWT authentication, refresh token rotation, session management, and PostgreSQL persistence.
+A Spring Boot expense tracker demonstrating modern backend practices, including **Spring Security, JWT authentication, refresh tokens, refresh-token rotation, PostgreSQL, Flyway, JPA, and stateless API security**.
 
+The authentication system was intentionally built incrementally to understand what Spring Security is doing underneath its defaults rather than simply relying on auto-configuration.
+
+---
+
+## Authentication Architecture
+
+The authentication system uses two types of tokens:
+
+* **Access Token** — short-lived JWT used to access protected APIs.
+* **Refresh Token** — long-lived, opaque token used to obtain a new access token.
+
+The access token currently expires after **15 minutes**, while refresh sessions currently have a **30-day lifetime**.
 
 ```mermaid
-
 flowchart TD
 
-    %% =========================
-    %% LOGIN
-    %% =========================
-
-    A[Client / Bruno / Browser] -->|POST /auth/login<br/>username + password| B[AuthController]
+    A[Client] -->|POST /auth/login<br/>username + password| B[AuthController]
 
     B --> C[AuthenticationManager]
-
     C --> D[DatabaseUserDetailsService]
-
-    D --> E[(PostgreSQL<br/>users)]
-
-    E -->|User| D
-
+    D --> E[(PostgreSQL users)]
+    E --> D
     D --> F[CustomUserDetails]
-
     F --> C
 
     C -->|Authentication successful| B
 
     B --> G[JWTService]
-
-    G -->|Generate JWT<br/>15 minute expiration| H[Access Token]
+    G --> H[Generate Access JWT<br/>15 minutes]
 
     B --> I[UserSessionService]
+    I --> J[Generate random Refresh Token]
+    J --> K[SHA-256 Hash]
+    K --> L[(PostgreSQL user_sessions)]
 
-    I --> J[Generate random<br/>Refresh Token]
-
-    J --> K[SHA-256 hash]
-
-    K --> L[(PostgreSQL<br/>user_sessions)]
-
-    I --> L
-
-    B --> M[LoginResponse]
-
-    H --> M
+    H --> M[LoginResponse]
     J --> M
+    M --> A
 
-    M -->|accessToken + refreshToken| A
-
-
-    %% =========================
-    %% API REQUEST
-    %% =========================
-
+    %% API request
     A -->|Authorization: Bearer JWT| N[Protected API]
-
     N --> O[SecurityFilterChain]
-
     O --> P[JWTAuthenticationFilter]
 
-    P --> Q{Bearer token<br/>present?}
+    P --> Q{Bearer token?}
 
-    Q -->|No| R[Continue filter chain]
+    Q -->|No| R[Continue Filter Chain]
+    Q -->|Yes| S[JWTService]
 
-    Q -->|Yes| S[JWTService<br/>Validate signature + expiration]
+    S --> T{Valid signature<br/>and expiration?}
 
-    S --> T{JWT valid?}
-
-    T -->|No| U[No Authentication]
-
+    T -->|No| U[401 Unauthorized]
     T -->|Yes| V[Extract JWTPrincipal]
 
-    V --> W[Create CustomUserDetails<br/>from JWT claims]
-
+    V --> W[CustomUserDetails<br/>from JWT claims]
     W --> X[SecurityContext]
+    X --> Y[Controller]
+    Y --> Z[Business Logic]
+    Z --> AA[200 OK]
 
-    X --> Y[Continue filter chain]
+    %% Expiration
+    S --> AB{Access Token<br/>Expired?}
+    AB -->|Yes| U
 
-    U --> Z[401 Unauthorized]
+    %% Refresh
+    A -->|POST /auth/refresh<br/>Refresh Token| AC[AuthController]
+    AC --> AD[UserSessionService]
+    AD --> AE[Hash incoming token]
+    AE --> AF[(user_sessions)]
 
-    Y --> AA[Controller / API]
+    AF --> AG{Session found?}
+    AG -->|No| AH[401 Unauthorized]
+    AG -->|Yes| AI{Revoked?}
 
-    R --> AA
+    AI -->|Yes| AH
+    AI -->|No| AJ{Expired?}
 
-    AA --> AB{Authenticated?}
+    AJ -->|Yes| AH
+    AJ -->|No| AK[Valid Refresh Token]
 
-    AB -->|No| Z
+    AK --> AL[Load associated User]
+    AK --> AM[Generate New Refresh Token]
+    AM --> AN[Hash New Refresh Token]
+    AN --> AO[Replace old token hash]
+    AO --> AP[Update last_used_at]
+    AP --> AQ[Save SAME UserSession]
 
-    AB -->|Yes| AC[Business Logic]
+    AL --> AR[Generate New Access Token]
+    AQ --> AS[Return New Refresh Token]
+    AR --> AT[RefreshResponse]
+    AS --> AT
+    AT --> A
 
-    AC --> AD[200 OK]
-
-
-    %% =========================
-    %% ACCESS TOKEN EXPIRATION
-    %% =========================
-
-    S --> AE{Access token<br/>expired?}
-
-    AE -->|Yes| U
-
-    AE -->|No| V
-
-
-    %% =========================
-    %% REFRESH
-    %% =========================
-
-    A -->|POST /auth/refresh<br/>refreshToken| AF[AuthController]
-
-    AF --> AG[UserSessionService]
-
-    AG --> AH[Hash incoming<br/>refresh token]
-
-    AH --> AI[(PostgreSQL<br/>user_sessions)]
-
-    AI --> AJ{Session found?}
-
-    AJ -->|No| AK[401 Unauthorized]
-
-    AJ -->|Yes| AL{Revoked?}
-
-    AL -->|Yes| AK
-
-    AL -->|No| AM{Expired?}
-
-    AM -->|Yes| AK
-
-    AM -->|No| AN[Valid refresh token]
-
-    AN --> AO[Load associated User]
-
-    AO --> AP[Generate new Access Token]
-
-    AP --> AQ[Return Access Token]
-
-
-    %% =========================
-    %% ROTATION
-    %% =========================
-
-    AN --> AR[Generate new Refresh Token]
-
-    AR --> AS[Hash new Refresh Token]
-
-    AS --> AT[Replace old<br/>refresh_token_hash]
-
-    AT --> AU[Update last_used_at]
-
-    AU --> AV[Save SAME UserSession]
-
-    AV --> AW[Return new Refresh Token]
-
-    AQ --> AX[LoginResponse]
-
-    AW --> AX
-
-    AX --> A
-
-
-    %% =========================
-    %% OLD TOKEN REUSE
-    %% =========================
-
-    A -->|Old Refresh Token A| AY[/auth/refresh]
-
-    AY --> AZ[Hash Token A]
-
-    AZ --> BA[(user_sessions)]
-
-    BA --> BB{Hash exists?}
-
-    BB -->|No| BC[401 Unauthorized]
-
-    BB -->|Yes| BD[Continue validation]
-
-    AT -.->|Old hash A removed| BB
-
-
-    %% =========================
-    %% REVOCATION
-    %% =========================
-
-    BE[Logout / Revoke Session] --> BF[UserSessionService]
-
-    BF --> BG[(PostgreSQL<br/>user_sessions)]
-
-    BG --> BH[Set revoked_at]
-
-    BH --> BI[Session revoked]
-
-    BI -->|Future refresh| BJ[401 Unauthorized]
-
+    %% Revocation
+    AU[Logout / Revoke Session] --> AV[UserSessionService]
+    AV --> AW[(user_sessions)]
+    AW --> AX[Set revoked_at]
+    AX --> AY[Future refresh = 401]
 ```
 
+---
+
+## 1. Login
+
+The client sends credentials to:
+
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "********"
+}
+```
+
+The request goes through Spring Security's `AuthenticationManager`.
+
+```text
+Client
+  │
+  │ username + password
+  ▼
+AuthController
+  │
+  ▼
+AuthenticationManager
+  │
+  ▼
+DatabaseUserDetailsService
+  │
+  ▼
+UserRepository
+  │
+  ▼
+PostgreSQL
+  │
+  ▼
+CustomUserDetails
+  │
+  ▼
+PasswordEncoder
+```
+
+If authentication succeeds, the application generates:
+
+```text
+Access Token
++
+Refresh Token
+```
+
+The response looks conceptually like:
+
+```json
+{
+  "accessToken": "...",
+  "refreshToken": "..."
+}
+```
+
+---
+
+## 2. Access Token
+
+The access token is a signed JWT.
+
+The current claims are approximately:
+
+```json
+{
+  "sub": "admin",
+  "uid": "019f47ca-...",
+  "role": "ADMIN",
+  "iat": 1783893415,
+  "exp": 1783894315
+}
+```
+
+The token contains enough information for the application to reconstruct the authenticated user's security identity without querying the database on every API request.
+
+### Why?
+
+For a normal protected request:
+
+```text
+JWT
+ │
+ ▼
+JWTAuthenticationFilter
+ │
+ ▼
+Validate JWT
+ │
+ ▼
+Extract JWTPrincipal
+ │
+ ▼
+CustomUserDetails
+ │
+ ▼
+SecurityContext
+ │
+ ▼
+Controller
+```
+
+There is **no database lookup** in this path.
+
+This is one of the major benefits of our JWT-based authentication design.
+
+---
+
+## 3. JWT Authentication Filter
+
+The custom filter is registered before Spring Security's `UsernamePasswordAuthenticationFilter`:
+
+```java
+.addFilterBefore(
+    jwtAuthenticationFilter,
+    UsernamePasswordAuthenticationFilter.class
+)
+```
+
+The filter:
+
+1. Reads the `Authorization` header.
+2. Checks for `Bearer`.
+3. Validates the JWT.
+4. Extracts the principal.
+5. Creates `CustomUserDetails`.
+6. Places the authentication into the `SecurityContext`.
+7. Continues the filter chain.
+
+Conceptually:
+
+```text
+Authorization: Bearer <JWT>
+                │
+                ▼
+       JWTAuthenticationFilter
+                │
+                ▼
+          JWTService
+                │
+        ┌───────┴───────┐
+        │               │
+      Invalid          Valid
+        │               │
+        ▼               ▼
+       401       JWTPrincipal
+                        │
+                        ▼
+                SecurityContext
+```
+
+---
+
+## 4. Access Token Expiration
+
+The access token is intentionally short-lived.
+
+Current lifetime:
+
+```text
+15 minutes
+```
+
+After expiration:
+
+```text
+Client
+  │
+  │ expired JWT
+  ▼
+JWTAuthenticationFilter
+  │
+  ▼
+JWTService
+  │
+  ▼
+Token expired
+  │
+  ▼
+401 Unauthorized
+```
+
+The client does **not** need to ask the user for their password again.
+
+Instead, it can use the refresh token.
+
+---
+
+# 5. Refresh Token
+
+Unlike the access token, the refresh token is an **opaque random value**.
+
+Example:
+
+```text
+068qm1ObvWUe4XGiWx-7TQyyoNfKRc5HvBuU39eVv4s
+```
+
+The server does not store this raw value.
+
+Instead:
+
+```text
+Raw Refresh Token
+        │
+        ▼
+     SHA-256
+        │
+        ▼
+refresh_token_hash
+```
+
+The database contains something like:
+
+```text
+9147865562814002bde65322ba00e55cd96cbb45dbfc817c2e6dba5ff1ab4374
+```
+
+This means a database compromise does not immediately expose usable refresh tokens.
+
+---
+
+# 6. User Sessions
+
+Refresh tokens are associated with persistent sessions.
+
+Current table:
+
+```text
+user_sessions
+
+id
+user_id
+refresh_token_hash
+user_agent
+ip_address
+created_at
+last_used_at
+expires_at
+revoked_at
+```
+
+A session represents a **login/device session**, rather than every individual refresh-token generation.
+
+For example:
+
+```text
+User #1
+
+Session #1 → Chrome
+Session #2 → Phone
+Session #3 → Tablet
+```
+
+This allows individual sessions to be revoked.
+
+For example:
+
+```text
+Chrome  → revoked
+Phone   → active
+Tablet  → active
+```
+
+---
+
+# 7. Multiple Simultaneous Sessions
+
+A user can have multiple refresh tokens simultaneously.
+
+```text
+                    User
+                     │
+        ┌────────────┼────────────┐
+        ▼            ▼            ▼
+     Chrome        Phone        Tablet
+        │            │            │
+   Session #1    Session #2    Session #3
+        │            │            │
+   Refresh A     Refresh B     Refresh C
+```
+
+This is important for session management.
+
+Logging out from Chrome does not have to invalidate the user's phone session.
+
+---
+
+# 8. Refresh Flow
+
+When the access token expires:
+
+```http
+POST /auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "..."
+}
+```
+
+The server:
+
+```text
+Refresh Token
+      │
+      ▼
+SHA-256
+      │
+      ▼
+Find UserSession
+      │
+      ├── Not found ──► 401
+      │
+      ├── Revoked ────► 401
+      │
+      ├── Expired ────► 401
+      │
+      ▼
+Valid Session
+      │
+      ▼
+Associated User
+      │
+      ▼
+Generate New Access Token
+```
+
+---
+
+# 9. Refresh Token Rotation
+
+Refresh tokens are **rotated** after successful use.
+
+Suppose the client currently has:
+
+```text
+Refresh Token A
+```
+
+The database contains:
+
+```text
+hash(A)
+```
+
+After a successful refresh:
+
+```text
+Refresh A
+    │
+    ▼
+Validate
+    │
+    ├──────────────► New Access Token
+    │
+    ▼
+Generate Refresh B
+    │
+    ▼
+Hash B
+    │
+    ▼
+Replace hash(A)
+with hash(B)
+```
+
+The same `UserSession` remains:
+
+```text
+Before:
+
+Session #1
+refresh_token_hash = hash(A)
+
+
+After:
+
+Session #1
+refresh_token_hash = hash(B)
+```
+
+The session itself is not recreated.
+
+---
+
+# 10. Why Rotation Matters
+
+Without rotation:
+
+```text
+Refresh A
+   │
+   ├── refresh ──► Access B
+   │
+   ├── refresh ──► Access C
+   │
+   └── refresh ──► Access D
+```
+
+Refresh token A remains usable for its entire lifetime.
+
+With rotation:
+
+```text
+Refresh A
+   │
+   ▼
+Refresh B
+   │
+   ▼
+Refresh C
+   │
+   ▼
+Refresh D
+```
+
+Each refresh token is intended to be used once.
+
+Therefore:
+
+```text
+A → B
+```
+
+means the old `A` is no longer valid.
+
+---
+
+# 11. Refresh Token Reuse
+
+Rotation also gives us an important security signal.
+
+Suppose an attacker steals Refresh Token A.
+
+Both the legitimate client and attacker possess:
+
+```text
+Refresh A
+```
+
+If the attacker uses it first:
+
+```text
+Attacker
+   │
+   │ Refresh A
+   ▼
+Server
+   │
+   ▼
+A → B
+```
+
+The legitimate client still has A.
+
+If it later sends A:
+
+```text
+Refresh A
+   │
+   ▼
+Server
+   │
+   ▼
+hash(A) no longer exists
+   │
+   ▼
+401 Unauthorized
+```
+
+This can eventually become **refresh-token reuse detection**.
+
+A previously valid token being presented again can indicate that a token was stolen.
+
+The next security enhancement is therefore:
+
+```text
+Refresh Token Reuse Detection
+            │
+            ▼
+Possible Token Theft
+            │
+            ▼
+Revoke Session / Token Family
+```
+
+---
+
+# 12. Session Revocation
+
+A session can be revoked by setting:
+
+```text
+revoked_at = CURRENT_TIMESTAMP
+```
+
+For example:
+
+```sql
+UPDATE user_sessions
+SET revoked_at = CURRENT_TIMESTAMP
+WHERE id = 1;
+```
+
+The refresh token associated with that session can no longer be used.
+
+```text
+Refresh Token
+      │
+      ▼
+UserSession
+      │
+      ▼
+revoked_at != NULL
+      │
+      ▼
+401 Unauthorized
+```
+
+---
+
+# 13. Authentication vs Authorization
+
+The project also distinguishes between authentication and authorization.
+
+### Authentication
+
+> "Who are you?"
+
+Examples:
+
+```text
+Username + Password
+JWT
+Refresh Token
+```
+
+Failure:
+
+```http
+401 Unauthorized
+```
+
+### Authorization
+
+> "Are you allowed to do this?"
+
+For example:
+
+```text
+Authenticated user
+        │
+        ▼
+ROLE_USER
+        │
+        ▼
+Admin-only endpoint
+        │
+        ▼
+403 Forbidden
+```
+
+This distinction is important when working with Spring Security.
+
+---
+
+# 14. Spring Security Responsibilities
+
+The application intentionally separates responsibilities.
+
+```text
+Spring Security
+│
+├── Authentication
+│   ├── AuthenticationManager
+│   ├── UserDetailsService
+│   └── PasswordEncoder
+│
+├── JWT authentication
+│   └── JWTAuthenticationFilter
+│
+├── Authorization
+│   ├── SecurityContext
+│   ├── Roles
+│   └── @PreAuthorize
+│
+└── HTTP security failures
+    ├── 401 Unauthorized
+    └── 403 Forbidden
+```
+
+Meanwhile, application-level exceptions are handled separately:
+
+```text
+GlobalExceptionHandler
+│
+├── ResourceNotFoundException → 404
+├── ValidationException       → 400
+├── BusinessRuleException     → 409
+└── Other application errors
+```
+
+This keeps security infrastructure separate from business-domain error handling.
+
+---
+
+# 15. Stateless API
+
+The application uses:
+
+```java
+.sessionManagement(session ->
+    session.sessionCreationPolicy(
+        SessionCreationPolicy.STATELESS
+    )
+)
+```
+
+Therefore the server does not use an HTTP session to maintain authentication state.
+
+The authentication state is represented by:
+
+```text
+Access JWT
+```
+
+while long-lived authentication continuity is represented by:
+
+```text
+Refresh Token + UserSession
+```
+
+This is why the application can remain stateless for normal API authentication while still supporting long-lived login sessions.
+
+---
+
+# 16. Complete Lifecycle
+
+The complete lifecycle can be summarized as:
+
+```text
+                    ┌──────────────┐
+                    │    LOGIN     │
+                    └──────┬───────┘
+                           │
+               username + password
+                           │
+                           ▼
+                  AuthenticationManager
+                           │
+                           ▼
+                 DatabaseUserDetailsService
+                           │
+                           ▼
+                      User Database
+                           │
+                           ▼
+                    Authentication OK
+                           │
+             ┌─────────────┴─────────────┐
+             ▼                           ▼
+       Access Token                 Refresh Token
+        15 minutes                    30 days
+             │                           │
+             ▼                           ▼
+        API Requests                UserSession
+             │                           │
+             ▼                           ▼
+     JWTAuthenticationFilter        PostgreSQL
+             │                           │
+             ▼                           │
+      Validate JWT                       │
+             │                           │
+        ┌────┴────┐                      │
+        ▼         ▼                      │
+     Valid      Expired                  │
+        │         │                      │
+        ▼         ▼                      │
+ SecurityContext  401                    │
+        │                                │
+        ▼                                │
+    Controller                           │
+        │                                │
+        ▼                                │
+      200 OK                             │
+                                         │
+                                  Access token expires
+                                         │
+                                         ▼
+                                  /auth/refresh
+                                         │
+                                         ▼
+                                  Validate session
+                                         │
+                              ┌──────────┴──────────┐
+                              ▼                     ▼
+                           Invalid                Valid
+                              │                     │
+                              ▼                     ▼
+                             401              Rotate token
+                                                    │
+                                       ┌────────────┴────────────┐
+                                       ▼                         ▼
+                                New Access JWT             New Refresh Token
+                                       │                         │
+                                       └────────────┬────────────┘
+                                                    │
+                                                    ▼
+                                                 Client
+                                                    │
+                                                    ▼
+                                                Repeat
+```
+
+---
+
+## Current Authentication Stack
+
+```text
+Spring Boot
+    │
+    ├── Spring Security
+    │
+    ├── JWT
+    │
+    ├── PostgreSQL
+    │
+    ├── Spring Data JPA
+    │
+    └── Flyway
+```
+
+### Security components
+
+```text
+auth/
+├── AuthController
+│
+├── config/
+│   ├── SecurityConfig
+│   ├── AdminBootstrapConfiguration
+│   └── AdminBootstrapProperties
+│
+└── security/
+    ├── JWTAuthenticationFilter
+    ├── JWTService
+    ├── JWTPrincipal
+    ├── CustomUserDetails
+    ├── CustomUserDetailsMapper
+    ├── DatabaseUserDetailsService
+    ├── RefreshTokenGenerator
+    ├── RefreshTokenHasher
+    └── UserSessionService
+```
+
+---
+
+## Authentication Goals
+
+This implementation intentionally demonstrates the following principles:
+
+* Stateless REST authentication
+* Short-lived access tokens
+* Long-lived refresh tokens
+* Refresh-token hashing
+* Refresh-token rotation
+* Per-device/session authentication
+* Session-level revocation
+* JWT authentication without a database lookup on every request
+* Database lookup during initial credential authentication
+* Separation of authentication and authorization
+* Separation of Spring Security errors from business exceptions
+* Explicit Spring Security configuration instead of relying entirely on defaults
+
+---
+
+## Roadmap
+
+The authentication system is being developed incrementally.
+
+### Completed
+
+* [x] Spring Security configuration
+* [x] Disable form login
+* [x] Disable HTTP Basic
+* [x] Stateless sessions
+* [x] Database-backed `UserDetailsService`
+* [x] Password authentication
+* [x] Custom `UserDetails`
+* [x] JWT generation
+* [x] JWT validation
+* [x] JWT authentication filter
+* [x] Access-token expiration
+* [x] JWT authentication without DB lookup
+* [x] Refresh-token generation
+* [x] Hashed refresh-token storage
+* [x] Persistent user sessions
+* [x] Multiple simultaneous sessions
+* [x] Session-level revocation
+* [x] `/auth/refresh`
+* [x] Refresh-token rotation
+
+### Next
+
+* [ ] Refresh-token reuse detection
+* [ ] Rotation/concurrency hardening
+* [ ] Logout endpoint
+* [ ] Revoke individual sessions
+* [ ] Revoke all sessions
+* [ ] Session management API
+* [ ] Further authentication/security hardening
+* [ ] Additional authorization rules
+
+---
+
+## Core Idea
+
+The most important concept behind the architecture is:
+
+```text
+Password
+   │
+   └── used during LOGIN
+
+Access Token
+   │
+   └── used for normal API requests
+
+Refresh Token
+   │
+   └── used to obtain new access tokens
+
+UserSession
+   │
+   └── controls long-lived authentication,
+       device sessions, rotation, and revocation
+```
+
+The result is a system where **normal API requests are fast and stateless**, while long-lived authentication remains **revocable and manageable through persistent refresh-token sessions**.
